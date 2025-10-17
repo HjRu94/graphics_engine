@@ -74,7 +74,7 @@ impl Orientation {
         }
     }
     pub fn direction(&self) -> Vector3<f32> {
-        self.apply(&Vector3::new(1.0, 0.0, 0.0))
+        self.apply(&Vector3::new(-1.0, 0.0, 0.0))
     }
     pub fn apply(&self, v: &Vector3<f32>) -> Vector3<f32> {
         Self::yaw_matrix(self.yaw)

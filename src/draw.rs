@@ -18,8 +18,7 @@ pub fn draw_scene(scene: &Scene, camera: &Camera) {
             }
 
             let normal = triangle.normal().get_array();
-            let light_dir = Array1::from(vec![0.0, 0.0, 1.0]);
-            //let light_dir: Array1<f32> = camera.orientation().direction().into();
+            let light_dir: Array1<f32> = camera.orientation().direction().into();
             let intensity = normal.dot(&light_dir).max(0.0);
 
             let ambient = 0.5;
