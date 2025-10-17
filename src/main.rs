@@ -1,5 +1,6 @@
 use learning_graphics::draw::Drawable;
 use learning_graphics::geometry::*;
+use learning_graphics::object::Object;
 use macroquad::prelude::*;
 
 fn window_conf() -> Conf {
@@ -16,6 +17,8 @@ fn window_conf() -> Conf {
 
 #[macroquad::main(window_conf)]
 async fn main() {
+    let object = Object::try_from_stl_file("./3d_models/cube.stl").expect("File doesn't exist");
+    println!("{}", object);
     let line1 = EucLine::new(5.0, 0.0, 0.0, 5.0, 5.0, 0.0);
     let line2 = EucLine::new(5.0, 0.0, 0.0, 5.0, 0.0, 5.0);
     let line3 = EucLine::new(5.0, 5.0, 5.0, 5.0, 5.0, 0.0);

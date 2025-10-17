@@ -1,7 +1,10 @@
 use crate::draw::Drawable;
 use macroquad::prelude::*;
 use std::f64::consts;
+use std::fmt::Formatter;
 use std::ops::{Add, Mul};
+
+use ndarray::Array1;
 
 #[derive(Clone, Copy, PartialEq)]
 pub struct EucPoint {
@@ -79,10 +82,68 @@ impl Drawable for EucLine {
     }
 }
 
-pub struct EucTriangle {
-    p1: EucPoint,
-    p2: EucPoint,
-    p3: EucPoint,
+pub struct Vector3<T>(Array1<T>);
+
+impl<T: Copy> Vector3<T> {
+    pub fn new(x: T, y: T, z: T) -> Self {
+        Vector3(Array1::from(vec![x, y, z]))
+    }
+    pub fn x(&self) -> T {
+        self.0[0]
+    }
+    pub fn y(&self) -> T {
+        self.0[1]
+    }
+    pub fn z(&self) -> T {
+        self.0[2]
+    }
+}
+
+impl<T: std::fmt::Display + Copy> std::fmt::Display for Vector3<T> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), std::fmt::Error> {
+        write!(f, "({}, {}, {})", self.x(), self.y(), self.z())
+    }
+}
+
+pub enum ConvertVectorError {
+    OutOfRangeError,
+}
+impl<T> TryFrom<Array1<T>> for Vector3<T> {
+    type Error = ConvertVectorError;
+    fn try_from(value: Array1<T>) -> Result<Self, Self::Error> {
+        match value.len() {
+            3 => Ok(Vector3::<T>(value)),
+            _ => Err(ConvertVectorError::OutOfRangeError),
+        }
+    }
+}
+
+pub struct Triangle {
+    p1: Vector3<f32>,
+    p2: Vector3<f32>,
+    p3: Vector3<f32>,
+    normal: Vector3<f32>,
+}
+
+impl std::fmt::Display for Triangle {
+    fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), std::fmt::Error> {
+        write!(
+            f,
+            "Triangle: \n p1: {} \n p2: {} \n p3: {} \n normal: {}",
+            self.p1, self.p2, self.p3, self.normal
+        )
+    }
+}
+
+impl Triangle {
+    pub fn new(p1: Vector3<f32>, p2: Vector3<f32>, p3: Vector3<f32>, normal: Vector3<f32>) -> Self {
+        Triangle {
+            p1: p1,
+            p2: p2,
+            p3: p3,
+            normal: normal,
+        }
+    }
 }
 
 #[derive(Clone, Copy, PartialEq)]
