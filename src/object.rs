@@ -1,11 +1,13 @@
-use crate::geometry::{Triangle, Vector3};
+use crate::geometry::{Pose, Triangle, Vector3};
+use crate::object;
 use std::fs::File;
 use std::io::BufReader;
 use std::io::Read;
 
 use byteorder::{LittleEndian, ReadBytesExt};
 
-pub struct Object(Vec<Triangle>);
+#[derive(Clone)]
+pub struct Mesh(Vec<Triangle>);
 
 fn read_vector3<R: Read>(reader: &mut R) -> std::io::Result<Vector3<f32>> {
     let x = reader.read_f32::<LittleEndian>()?;
@@ -14,7 +16,7 @@ fn read_vector3<R: Read>(reader: &mut R) -> std::io::Result<Vector3<f32>> {
     Ok(Vector3::new(x, y, z))
 }
 
-impl Object {
+impl Mesh {
     pub fn try_from_stl_file(filename: &str) -> std::io::Result<Self> {
         let file = File::open(filename)?;
         let mut reader = BufReader::new(file);
@@ -37,17 +39,52 @@ impl Object {
             triangles.push(Triangle::new(p1, p2, p3, normal));
         }
 
-        Ok(Object(triangles))
+        Ok(Mesh(triangles))
+    }
+    pub fn iter(&self) -> impl Iterator<Item = &Triangle> {
+        self.0.iter()
     }
 }
 
-impl std::fmt::Display for Object {
+impl std::fmt::Display for Mesh {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
         let mut ret = String::from("");
         for triangle in &self.0 {
             ret += &format!("{}", triangle);
+            ret += "\n"
         }
-        write!(f, "Object: {}", ret)
+        write!(f, "Object: \n{}", ret)
+    }
+}
+
+pub struct Object {
+    mesh: Mesh,
+    pose: Pose,
+}
+
+impl Object {
+    pub fn new(mesh: Mesh, pose: Pose) -> Self {
+        Object {
+            mesh: mesh,
+            pose: pose,
+        }
+    }
+    pub fn mesh_iter(&self) -> impl Iterator<Item = &Triangle> {
+        self.mesh.iter()
+    }
+}
+
+pub struct Scene {
+    objects: Vec<Object>,
+}
+
+impl Scene {
+    pub const EMPTY: Scene = Scene { objects: vec![] };
+    pub fn new(objects: Vec<Object>) -> Self {
+        Scene { objects: objects }
+    }
+    pub fn iter(&self) -> impl Iterator<Item = &Object> {
+        self.objects.iter()
     }
 }
 

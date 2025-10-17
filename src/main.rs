@@ -1,6 +1,7 @@
-use learning_graphics::draw::Drawable;
-use learning_graphics::geometry::*;
-use learning_graphics::object::Object;
+use learning_graphics::draw::draw_scene;
+use learning_graphics::geometry::{Pose, Vector3};
+use learning_graphics::object::{Mesh, Object, Scene};
+use learning_graphics::view::Camera;
 use macroquad::prelude::*;
 
 fn window_conf() -> Conf {
@@ -17,20 +18,22 @@ fn window_conf() -> Conf {
 
 #[macroquad::main(window_conf)]
 async fn main() {
-    let object = Object::try_from_stl_file("./3d_models/cube.stl").expect("File doesn't exist");
-    println!("{}", object);
-    let line1 = EucLine::new(5.0, 0.0, 0.0, 5.0, 5.0, 0.0);
-    let line2 = EucLine::new(5.0, 0.0, 0.0, 5.0, 0.0, 5.0);
-    let line3 = EucLine::new(5.0, 5.0, 5.0, 5.0, 5.0, 0.0);
-    let line4 = EucLine::new(5.0, 5.0, 5.0, 5.0, 0.0, 5.0);
+    let mut z = -0.78;
+    let mesh = Mesh::try_from_stl_file("./3d_models/apa.stl").expect("File doesn't exist");
+
     loop {
-        clear_background(WHITE);
-        line1.draw();
-        line2.draw();
-        line3.draw();
-        line4.draw();
-        draw_line(500.0, 0.0, 500.0, 1000.0, 2.0, BLACK);
-        draw_line(0.0, 500.0, 1000.0, 500.0, 2.0, BLACK);
+        z += 0.03;
+        let camera_pos = Vector3::new(-5.0, -5.0, 5.0);
+        let camera_facing = Vector3::new(0.0, -0.78, z);
+        let camera_pose = Pose::new(camera_pos, camera_facing);
+        let camera = Camera::new(camera_pose);
+
+        let pose = Pose::new(Vector3::zero(), Vector3::zero());
+        let object = Object::new(mesh.clone(), pose);
+        let objects = vec![object];
+        let scene = Scene::new(objects);
+        clear_background(BLACK);
+        draw_scene(&scene, &camera);
         next_frame().await;
     }
 }
