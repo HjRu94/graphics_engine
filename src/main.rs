@@ -1,7 +1,6 @@
-use macroquad::prelude::*;
-use learning_graphics::geometry::*;
-use std::f64::consts;
 use learning_graphics::draw::Drawable;
+use learning_graphics::geometry::*;
+use macroquad::prelude::*;
 
 fn window_conf() -> Conf {
     Conf {
@@ -17,18 +16,10 @@ fn window_conf() -> Conf {
 
 #[macroquad::main(window_conf)]
 async fn main() {
-    let line1 = EucLine::new(
-        5.0, 0.0, 0.0, 5.0, 5.0, 0.0
-        );
-    let line2 = EucLine::new(
-        5.0, 0.0, 0.0, 5.0, 0.0, 5.0
-        );
-    let line3 = EucLine::new(
-        5.0, 5.0, 5.0, 5.0, 5.0, 0.0
-        );
-    let line4 = EucLine::new(
-        5.0, 5.0, 5.0, 5.0, 0.0, 5.0
-        );
+    let line1 = EucLine::new(5.0, 0.0, 0.0, 5.0, 5.0, 0.0);
+    let line2 = EucLine::new(5.0, 0.0, 0.0, 5.0, 0.0, 5.0);
+    let line3 = EucLine::new(5.0, 5.0, 5.0, 5.0, 5.0, 0.0);
+    let line4 = EucLine::new(5.0, 5.0, 5.0, 5.0, 0.0, 5.0);
     loop {
         clear_background(WHITE);
         line1.draw();

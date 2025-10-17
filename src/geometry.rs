@@ -1,7 +1,7 @@
-use std::f64::consts;
 use crate::draw::Drawable;
-use std::ops::{Add, Mul};
 use macroquad::prelude::*;
+use std::f64::consts;
+use std::ops::{Add, Mul};
 
 #[derive(Clone, Copy, PartialEq)]
 pub struct EucPoint {
@@ -13,7 +13,12 @@ pub struct EucPoint {
 impl Drawable for EucPoint {
     fn draw(&self) {
         let new_point = SphPoint::from(*self);
-        draw_circle((new_point.az.expect("HEJ") * 2.0 / consts::PI * 500.0 + 500.0) as f32,(new_point.po.expect("HEJ") * 2.0 / consts::PI * 500.0) as f32, 2.0, RED);
+        draw_circle(
+            (new_point.az.expect("HEJ") * 2.0 / consts::PI * 500.0 + 500.0) as f32,
+            (new_point.po.expect("HEJ") * 2.0 / consts::PI * 500.0) as f32,
+            2.0,
+            RED,
+        );
     }
 }
 
@@ -47,7 +52,7 @@ pub struct EucLine {
 }
 
 impl EucLine {
-    pub fn new(x1: f64, y1: f64, z1: f64, x2: f64, y2: f64, z2: f64) -> Self{
+    pub fn new(x1: f64, y1: f64, z1: f64, x2: f64, y2: f64, z2: f64) -> Self {
         EucLine {
             p1: EucPoint {
                 x: x1,
@@ -58,16 +63,17 @@ impl EucLine {
                 x: x2,
                 y: y2,
                 z: z2,
-            }
+            },
         }
     }
 }
 
 impl Drawable for EucLine {
     fn draw(&self) {
-        let resolution = 100;
+        let resolution = 200;
         for i in 0..(resolution + 1) {
-            let new_point = (self.p1 * i as f64 + self.p2 * ((resolution - i) as f64)) * (1.0 / resolution as f64);
+            let new_point = (self.p1 * i as f64 + self.p2 * ((resolution - i) as f64))
+                * (1.0 / resolution as f64);
             new_point.draw();
         }
     }
@@ -78,7 +84,6 @@ pub struct EucTriangle {
     p2: EucPoint,
     p3: EucPoint,
 }
-
 
 #[derive(Clone, Copy, PartialEq)]
 pub struct SphPoint {
@@ -110,7 +115,7 @@ impl From<EucPoint> for SphPoint {
         SphPoint {
             r: r,
             po: po,
-            az: az
+            az: az,
         }
     }
 }
