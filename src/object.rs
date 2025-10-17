@@ -18,6 +18,9 @@ fn read_vector3<R: Read>(reader: &mut R) -> std::io::Result<Vector3<f32>> {
 }
 
 impl Mesh {
+    pub fn new(triangles: Vec<Triangle>) -> Self {
+        Mesh(triangles)
+    }
     pub fn try_from_stl_file(filename: &str) -> std::io::Result<Self> {
         let file = File::open(filename)?;
         let mut reader = BufReader::new(file);
@@ -41,6 +44,33 @@ impl Mesh {
         }
 
         Ok(Mesh(triangles))
+    }
+    pub fn sort_by_x(&mut self) {
+        self.0.sort_by(|a, b| {
+            // Extract x-values
+            let mut ax = [a.p1().x(), a.p2().x(), a.p3().x()];
+            let mut bx = [b.p1().x(), b.p2().x(), b.p3().x()];
+            ax.sort_by(|x1, x2| x1.partial_cmp(x2).unwrap());
+            bx.sort_by(|x1, x2| x1.partial_cmp(x2).unwrap());
+
+            // Compare lexicographically: (xl, xm, xh)
+            ax[0]
+                .partial_cmp(&bx[0])
+                .unwrap()
+                .then_with(|| ax[1].partial_cmp(&bx[1]).unwrap())
+                .then_with(|| ax[2].partial_cmp(&bx[2]).unwrap())
+        });
+    }
+    pub fn reverse(&mut self) {
+        self.0.reverse();
+    }
+    pub fn apply_pose(&self, pose: &Pose) -> Mesh {
+        let mut triangles: Vec<Triangle> = vec![];
+
+        for triangle in &self.0 {
+            triangles.push(triangle.apply_pose(pose));
+        }
+        Mesh::new(triangles)
     }
     pub fn iter(&self) -> impl Iterator<Item = &Triangle> {
         self.0.iter()
@@ -72,6 +102,25 @@ impl Object {
             color: color,
         }
     }
+    pub fn apply_pose(&self) -> Self {
+        Object {
+            mesh: self.mesh.apply_pose(&self.pose),
+            pose: Pose::zero(),
+            color: self.color(),
+        }
+    }
+    pub fn sort_by_x(&mut self) {
+        self.mesh.sort_by_x();
+    }
+    pub fn reverse(&mut self) {
+        self.mesh.reverse();
+    }
+    pub fn mesh(&self) -> &Mesh {
+        &self.mesh
+    }
+    pub fn pose(&self) -> &Pose {
+        &self.pose
+    }
     pub fn color(&self) -> Color {
         self.color
     }
@@ -93,3 +142,4 @@ impl Scene {
         self.objects.iter()
     }
 }
+

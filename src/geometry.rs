@@ -1,9 +1,23 @@
 use macroquad::prelude::*;
 
 use ndarray::prelude::*;
+use ndarray::Zip;
+use std::ops::Add;
 #[derive(Clone, PartialEq)]
-
 pub struct Vector3<T>(Array1<T>);
+
+impl<T> Add for Vector3<T>
+where
+    T: Add<Output = T> + Copy,
+{
+    type Output = Self;
+
+    fn add(self, rhs: Self) -> Self::Output {
+        // Element-wise addition using Zip
+        let result = Zip::from(&self.0).and(&rhs.0).map_collect(|a, b| *a + *b);
+        Vector3(result)
+    }
+}
 
 impl<T: Copy> Vector3<T> {
     pub fn new(x: T, y: T, z: T) -> Self {
@@ -38,6 +52,7 @@ impl<T: std::fmt::Display + Copy> std::fmt::Display for Vector3<T> {
     }
 }
 
+#[derive(Clone)]
 pub struct Orientation {
     roll: f32,
     pitch: f32,
@@ -58,7 +73,10 @@ impl Orientation {
             yaw: yaw,
         }
     }
-    pub fn apply(&self, v: Vector3<f32>) -> Vector3<f32> {
+    pub fn direction(&self) -> Vector3<f32> {
+        self.apply(&Vector3::new(1.0, 0.0, 0.0))
+    }
+    pub fn apply(&self, v: &Vector3<f32>) -> Vector3<f32> {
         Self::yaw_matrix(self.yaw)
             .dot(&Self::pitch_matrix(self.pitch))
             .dot(&Self::roll_matrix(self.roll))
@@ -66,7 +84,7 @@ impl Orientation {
             .try_into()
             .expect("Dimention is incorrect")
     }
-    pub fn unapply(&self, v: Vector3<f32>) -> Vector3<f32> {
+    pub fn unapply(&self, v: &Vector3<f32>) -> Vector3<f32> {
         Self::roll_matrix(-self.roll)
             .dot(&Self::pitch_matrix(-self.pitch))
             .dot(&Self::yaw_matrix(-self.yaw))
@@ -119,6 +137,11 @@ impl<T> TryFrom<Array1<T>> for Vector3<T> {
         }
     }
 }
+impl<T> Into<Array1<T>> for Vector3<T> {
+    fn into(self) -> Array1<T> {
+        self.0
+    }
+}
 
 #[derive(Clone)]
 pub struct Triangle {
@@ -147,6 +170,14 @@ impl Triangle {
             normal: normal,
         }
     }
+    pub fn apply_pose(&self, pose: &Pose) -> Self {
+        Triangle {
+            p1: pose.orientation().apply(self.p1()) + pose.pos().clone(),
+            p2: pose.orientation().apply(self.p2()) + pose.pos().clone(),
+            p3: pose.orientation().apply(self.p3()) + pose.pos().clone(),
+            normal: pose.orientation().apply(self.normal()),
+        }
+    }
     pub fn normal(&self) -> &Vector3<f32> {
         &self.normal
     }
@@ -161,12 +192,19 @@ impl Triangle {
     }
 }
 
+#[derive(Clone)]
 pub struct Pose {
     pos: Vector3<f32>,
     orientation: Orientation,
 }
 
 impl Pose {
+    pub fn zero() -> Self {
+        Pose {
+            pos: Vector3::zero(),
+            orientation: Orientation::ZERO,
+        }
+    }
     pub fn new(pos: Vector3<f32>, orientation: Orientation) -> Self {
         Pose {
             pos: pos,

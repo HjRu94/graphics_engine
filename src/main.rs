@@ -18,21 +18,24 @@ fn window_conf() -> Conf {
 
 #[macroquad::main(window_conf)]
 async fn main() {
-    let mut z = -0.78;
+    let mut z: f32 = -0.78;
+    let mut x: f32 = 0.0;
     let mesh = Mesh::try_from_stl_file("./3d_models/cube.stl").expect("File doesn't exist");
 
     loop {
         z += 0.03;
+        //x += 0.03;
         let camera_pos = Vector3::new(
-            3.0 * (3.14 as f32 - z).cos(),
-            3.0 * (3.14 as f32 - z).sin(),
-            3.0,
+            2.3 * (3.14 as f32 - z).cos(),
+            2.3 * (3.14 as f32 - z).sin(),
+            2.3,
         );
         let camera_facing = Orientation::new(0.0, -0.78, z);
         let camera_pose = Pose::new(camera_pos, camera_facing);
         let camera = Camera::new(camera_pose);
 
-        let pose = Pose::new(Vector3::zero(), Orientation::ZERO);
+        let object_orientation = Orientation::new(x, 0.0, 0.0);
+        let pose = Pose::new(Vector3::zero(), object_orientation);
         let object = Object::new(mesh.clone(), pose, Color::new(0.5, 0.0, 1.0, 1.0));
         let objects = vec![object];
         let scene = Scene::new(objects);
