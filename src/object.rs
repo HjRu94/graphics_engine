@@ -1,5 +1,6 @@
 use crate::geometry::{Pose, Triangle, Vector3};
 use crate::object;
+use macroquad::prelude::Color;
 use std::fs::File;
 use std::io::BufReader;
 use std::io::Read;
@@ -60,14 +61,19 @@ impl std::fmt::Display for Mesh {
 pub struct Object {
     mesh: Mesh,
     pose: Pose,
+    color: Color,
 }
 
 impl Object {
-    pub fn new(mesh: Mesh, pose: Pose) -> Self {
+    pub fn new(mesh: Mesh, pose: Pose, color: Color) -> Self {
         Object {
             mesh: mesh,
             pose: pose,
+            color: color,
         }
+    }
+    pub fn color(&self) -> Color {
+        self.color
     }
     pub fn mesh_iter(&self) -> impl Iterator<Item = &Triangle> {
         self.mesh.iter()

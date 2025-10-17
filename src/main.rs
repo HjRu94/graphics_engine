@@ -29,9 +29,10 @@ async fn main() {
         let camera = Camera::new(camera_pose);
 
         let pose = Pose::new(Vector3::zero(), Vector3::zero());
-        let object = Object::new(mesh.clone(), pose);
+        let object = Object::new(mesh.clone(), pose, Color::new(0.5, 0.0, 1.0, 1.0));
         let objects = vec![object];
         let scene = Scene::new(objects);
+
         clear_background(BLACK);
         draw_scene(&scene, &camera);
         next_frame().await;

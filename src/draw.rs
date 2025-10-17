@@ -26,7 +26,7 @@ pub fn draw_scene(scene: &Scene, camera: &Camera) {
                 vec2(500.0 - p1_r.y() * scalar, 500.0 - p1_r.z() * scalar),
                 vec2(500.0 - p2_r.y() * scalar, 500.0 - p2_r.z() * scalar),
                 vec2(500.0 - p3_r.y() * scalar, 500.0 - p3_r.z() * scalar),
-                WHITE,
+                object.color(),
             );
         }
     }
