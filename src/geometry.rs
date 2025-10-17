@@ -1,7 +1,8 @@
 use macroquad::prelude::*;
 
-use ndarray::Array1;
+use ndarray::prelude::*;
 #[derive(Clone, PartialEq)]
+
 pub struct Vector3<T>(Array1<T>);
 
 impl<T: Copy> Vector3<T> {
@@ -36,6 +37,75 @@ impl<T: std::fmt::Display + Copy> std::fmt::Display for Vector3<T> {
         write!(f, "({}, {}, {})", self.x(), self.y(), self.z())
     }
 }
+
+pub struct Orientation {
+    roll: f32,
+    pitch: f32,
+    yaw: f32,
+}
+
+impl Orientation {
+    pub const ZERO: Orientation = Orientation {
+        roll: 0.0,
+        pitch: 0.0,
+        yaw: 0.0,
+    };
+
+    pub fn new(roll: f32, pitch: f32, yaw: f32) -> Self {
+        Orientation {
+            roll: roll,
+            pitch: pitch,
+            yaw: yaw,
+        }
+    }
+    pub fn apply(&self, v: Vector3<f32>) -> Vector3<f32> {
+        Self::yaw_matrix(self.yaw)
+            .dot(&Self::pitch_matrix(self.pitch))
+            .dot(&Self::roll_matrix(self.roll))
+            .dot(&v.0)
+            .try_into()
+            .expect("Dimention is incorrect")
+    }
+    pub fn unapply(&self, v: Vector3<f32>) -> Vector3<f32> {
+        Self::roll_matrix(-self.roll)
+            .dot(&Self::pitch_matrix(-self.pitch))
+            .dot(&Self::yaw_matrix(-self.yaw))
+            .dot(&v.0)
+            .try_into()
+            .expect("Dimention is incorrect")
+    }
+    pub fn roll(&self) -> f32 {
+        self.roll
+    }
+    fn roll_matrix(roll: f32) -> Array2<f32> {
+        array![
+            [1.0, 0.0, 0.0],
+            [0.0, roll.cos(), roll.sin()],
+            [0.0, -roll.sin(), roll.cos()],
+        ]
+    }
+    pub fn pitch(&self) -> f32 {
+        self.pitch
+    }
+    fn pitch_matrix(pitch: f32) -> Array2<f32> {
+        array![
+            [pitch.cos(), 0.0, -pitch.sin()],
+            [0.0, 1.0, 0.0],
+            [pitch.sin(), 0.0, pitch.cos()],
+        ]
+    }
+    pub fn yaw(&self) -> f32 {
+        self.yaw
+    }
+    fn yaw_matrix(yaw: f32) -> Array2<f32> {
+        array![
+            [yaw.cos(), yaw.sin(), 0.0],
+            [-yaw.sin(), yaw.cos(), 0.0],
+            [0.0, 0.0, 1.0],
+        ]
+    }
+}
+
 #[derive(Debug)]
 pub enum ConvertVectorError {
     OutOfRangeError,
@@ -92,14 +162,12 @@ impl Triangle {
 }
 
 pub struct Pose {
-    // pos : a vector in euclidian space
     pos: Vector3<f32>,
-    // orientation: a vector containing radiant values for roll pitch yaw
-    orientation: Vector3<f32>,
+    orientation: Orientation,
 }
 
 impl Pose {
-    pub fn new(pos: Vector3<f32>, orientation: Vector3<f32>) -> Self {
+    pub fn new(pos: Vector3<f32>, orientation: Orientation) -> Self {
         Pose {
             pos: pos,
             orientation: orientation,
@@ -108,7 +176,7 @@ impl Pose {
     pub fn pos(&self) -> &Vector3<f32> {
         &self.pos
     }
-    pub fn orientation(&self) -> &Vector3<f32> {
+    pub fn orientation(&self) -> &Orientation {
         &self.orientation
     }
 }

@@ -1,5 +1,5 @@
 use learning_graphics::draw::draw_scene;
-use learning_graphics::geometry::{Pose, Vector3};
+use learning_graphics::geometry::{Orientation, Pose, Vector3};
 use learning_graphics::object::{Mesh, Object, Scene};
 use learning_graphics::view::Camera;
 use macroquad::prelude::*;
@@ -28,11 +28,11 @@ async fn main() {
             3.0 * (3.14 as f32 - z).sin(),
             3.0,
         );
-        let camera_facing = Vector3::new(0.0, -0.78, z);
+        let camera_facing = Orientation::new(0.0, -0.78, z);
         let camera_pose = Pose::new(camera_pos, camera_facing);
         let camera = Camera::new(camera_pose);
 
-        let pose = Pose::new(Vector3::zero(), Vector3::zero());
+        let pose = Pose::new(Vector3::zero(), Orientation::ZERO);
         let object = Object::new(mesh.clone(), pose, Color::new(0.5, 0.0, 1.0, 1.0));
         let objects = vec![object];
         let scene = Scene::new(objects);
