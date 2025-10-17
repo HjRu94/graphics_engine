@@ -1,5 +1,6 @@
 use crate::geometry::{Pose, Triangle, Vector3};
 use crate::object;
+use crate::view::Camera;
 use macroquad::prelude::Color;
 use std::fs::File;
 use std::io::BufReader;
@@ -47,19 +48,19 @@ impl Mesh {
     }
     pub fn sort_by_x(&mut self) {
         self.0.sort_by(|a, b| {
-            // Extract x-values
-            let mut ax = [a.p1().x(), a.p2().x(), a.p3().x()];
-            let mut bx = [b.p1().x(), b.p2().x(), b.p3().x()];
-            ax.sort_by(|x1, x2| x1.partial_cmp(x2).unwrap());
-            bx.sort_by(|x1, x2| x1.partial_cmp(x2).unwrap());
+            let depth_a = (a.p1().x() + a.p2().x() + a.p3().x()) / 3.0;
+            let depth_b = (b.p1().x() + b.p2().x() + b.p3().x()) / 3.0;
 
-            // Compare lexicographically: (xl, xm, xh)
-            ax[0]
-                .partial_cmp(&bx[0])
-                .unwrap()
-                .then_with(|| ax[1].partial_cmp(&bx[1]).unwrap())
-                .then_with(|| ax[2].partial_cmp(&bx[2]).unwrap())
+            depth_b.partial_cmp(&depth_a).unwrap()
         });
+    }
+    pub fn remove_away_faceing_triangles(&mut self, camera: &Camera) {
+        self.0 = self
+            .0
+            .iter()
+            .filter(|triangle| camera.orientation().unapply(triangle.normal()).x() < 0.0)
+            .cloned() // clone because iter() yields &Triangle
+            .collect();
     }
     pub fn reverse(&mut self) {
         self.0.reverse();
@@ -109,8 +110,12 @@ impl Object {
             color: self.color(),
         }
     }
-    pub fn sort_by_x(&mut self) {
-        self.mesh.sort_by_x();
+    pub fn prepare_render(&self, camera: &Camera) -> Self {
+        let mut projected_object = camera.project_object(self);
+        projected_object = projected_object.apply_pose();
+        projected_object.mesh.sort_by_x();
+        projected_object.mesh.remove_away_faceing_triangles(camera);
+        projected_object
     }
     pub fn reverse(&mut self) {
         self.mesh.reverse();

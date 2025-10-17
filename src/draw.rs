@@ -6,9 +6,8 @@ use ndarray::Array1;
 pub fn draw_scene(scene: &Scene, camera: &Camera) {
     let scalar = 200.0;
     for object in scene.iter() {
-        let mut projected_object = camera.project_object(object);
-        projected_object.sort_by_x();
-        projected_object.reverse();
+        let projected_object = object.prepare_render(camera);
+
         for triangle in projected_object.mesh_iter() {
             let p1 = triangle.p1();
             let p2 = triangle.p2();

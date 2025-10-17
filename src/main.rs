@@ -19,7 +19,7 @@ fn window_conf() -> Conf {
 #[macroquad::main(window_conf)]
 async fn main() {
     let mut z: f32 = -0.78;
-    let mut x: f32 = 0.0;
+    let mut x: f32 = 0.00;
     let mesh = Mesh::try_from_stl_file("./3d_models/cube.stl").expect("File doesn't exist");
 
     loop {
