@@ -93,4 +93,3 @@ impl Scene {
         self.objects.iter()
     }
 }
-

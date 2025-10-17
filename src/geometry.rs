@@ -77,6 +77,9 @@ impl Triangle {
             normal: normal,
         }
     }
+    pub fn normal(&self) -> &Vector3<f32> {
+        &self.normal
+    }
     pub fn p1(&self) -> &Vector3<f32> {
         &self.p1
     }

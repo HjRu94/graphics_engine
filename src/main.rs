@@ -19,11 +19,15 @@ fn window_conf() -> Conf {
 #[macroquad::main(window_conf)]
 async fn main() {
     let mut z = -0.78;
-    let mesh = Mesh::try_from_stl_file("./3d_models/apa.stl").expect("File doesn't exist");
+    let mesh = Mesh::try_from_stl_file("./3d_models/cube.stl").expect("File doesn't exist");
 
     loop {
         z += 0.03;
-        let camera_pos = Vector3::new(-5.0, -5.0, 5.0);
+        let camera_pos = Vector3::new(
+            3.0 * (3.14 as f32 - z).cos(),
+            3.0 * (3.14 as f32 - z).sin(),
+            3.0,
+        );
         let camera_facing = Vector3::new(0.0, -0.78, z);
         let camera_pose = Pose::new(camera_pos, camera_facing);
         let camera = Camera::new(camera_pose);

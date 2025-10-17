@@ -2,6 +2,7 @@ use crate::geometry::Vector3;
 use crate::object::{self, Scene};
 use crate::view::Camera;
 use macroquad::prelude::*;
+use ndarray::Array1;
 
 pub fn draw_scene(scene: &Scene, camera: &Camera) {
     let scalar = 200.0;
@@ -18,6 +19,21 @@ pub fn draw_scene(scene: &Scene, camera: &Camera) {
             if p1_r == None || p2_r == None || p3_r == None {
                 continue;
             }
+
+            let normal = triangle.normal().get_array();
+            let light_dir = Array1::from(vec![0.0, 0.0, -1.0]);
+            let intensity = normal.dot(&light_dir).max(0.0);
+
+            let ambient = 0.5;
+            let intensity = ambient + intensity * (1.0 - ambient);
+
+            let color = Color::new(
+                object.color().r * intensity,
+                object.color().g * intensity,
+                object.color().b * intensity,
+                object.color().a,
+            );
+
             let p1_r = p1_r.unwrap();
             let p2_r = p2_r.unwrap();
             let p3_r = p3_r.unwrap();
@@ -26,7 +42,7 @@ pub fn draw_scene(scene: &Scene, camera: &Camera) {
                 vec2(500.0 - p1_r.y() * scalar, 500.0 - p1_r.z() * scalar),
                 vec2(500.0 - p2_r.y() * scalar, 500.0 - p2_r.z() * scalar),
                 vec2(500.0 - p3_r.y() * scalar, 500.0 - p3_r.z() * scalar),
-                object.color(),
+                color,
             );
         }
     }
