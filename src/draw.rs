@@ -4,6 +4,7 @@ use crate::view::Camera;
 use macroquad::prelude::*;
 use ndarray::Array1;
 
+#[cfg(feature = "timing")]
 use std::time::{Duration, Instant};
 
 pub fn draw_scene(scene: &Scene, camera: &Camera) {

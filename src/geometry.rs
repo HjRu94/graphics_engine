@@ -2,7 +2,7 @@ use macroquad::prelude::*;
 
 use ndarray::prelude::*;
 use ndarray::Zip;
-use std::ops::Add;
+use std::ops::{Add, Mul};
 
 use std::hash::{Hash, Hasher};
 
@@ -20,6 +20,19 @@ where
     fn add(self, rhs: Self) -> Self::Output {
         // Element-wise addition using Zip
         let result = Zip::from(&self.0).and(&rhs.0).map_collect(|a, b| *a + *b);
+        Vector3(result)
+    }
+}
+
+// Implement scalar multiplication: Vector3<T> * T
+impl<T> Mul<T> for Vector3<T>
+where
+    T: Mul<Output = T> + Copy,
+{
+    type Output = Self;
+
+    fn mul(self, scalar: T) -> Self::Output {
+        let result = self.0.mapv(|x| x * scalar);
         Vector3(result)
     }
 }
