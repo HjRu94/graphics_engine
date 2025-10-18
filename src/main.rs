@@ -1,7 +1,3 @@
-use learning_graphics::constants::{
-    MONITOR_SCALING, PLANE_DARK_COLOR, PLANE_LIGHT_COLOR, PLANE_SIZE, PLANE_SQUARE_SIZE,
-    WINDOW_HEIGHT, WINDOW_WIDTH,
-};
 use learning_graphics::draw::draw_scene;
 use learning_graphics::geometry::{Orientation, Pose, Vector3};
 use learning_graphics::object::{Mesh, Object, Scene};
@@ -11,8 +7,8 @@ use macroquad::prelude::*;
 fn window_conf() -> Conf {
     Conf {
         window_title: "Graphics".to_owned(),
-        window_width: (WINDOW_WIDTH as f32 * MONITOR_SCALING).floor() as i32,
-        window_height: (WINDOW_HEIGHT as f32 * MONITOR_SCALING).floor() as i32,
+        window_width: 2000,
+        window_height: 2000,
         high_dpi: true,
         ..Default::default()
     }
@@ -23,17 +19,23 @@ fn window_conf() -> Conf {
 #[macroquad::main(window_conf)]
 async fn main() {
     let mut z: f32 = -0.78;
+    let mut x: f32 = 0.00;
     let mesh = Mesh::try_from_stl_file("./3d_models/apa.stl").expect("File doesn't exist");
 
     //even plane
-    let plane_mesh_even = Mesh::alternating_plane(PLANE_SIZE, PLANE_SQUARE_SIZE, true);
-    let plane_object_even = Object::new(plane_mesh_even, Pose::zero(), PLANE_LIGHT_COLOR);
+    let plane_mesh_even = Mesh::alternating_plane(10, 2.0, true);
+    let plane_object_even = Object::new(
+        plane_mesh_even,
+        Pose::zero(),
+        Color::new(1.0, 1.0, 1.0, 1.0),
+    );
 
     //odd plane
-    let plane_mesh_odd = Mesh::alternating_plane(PLANE_SIZE, PLANE_SQUARE_SIZE, false);
-    let plane_object_odd = Object::new(plane_mesh_odd, Pose::zero(), PLANE_DARK_COLOR);
+    let plane_mesh_odd = Mesh::alternating_plane(10, 2.0, false);
+    let plane_object_odd =
+        Object::new(plane_mesh_odd, Pose::zero(), Color::new(0.2, 0.2, 0.2, 1.0));
 
-    let object_orientation = Orientation::new(1.0, 0.0, 0.0);
+    let object_orientation = Orientation::new(x, 0.0, 0.0);
 
     let pose = Pose::new(Vector3::zero(), object_orientation);
     let object = Object::new(mesh.clone(), pose, Color::new(0.5, 0.0, 1.0, 1.0));
@@ -41,6 +43,7 @@ async fn main() {
     let scene = Scene::new(objects);
     loop {
         z += 0.03;
+        x += 0.03;
         let camera_pos = Vector3::new(
             6.3 * (3.14 as f32 - z).cos(),
             6.3 * (3.14 as f32 - z).sin(),

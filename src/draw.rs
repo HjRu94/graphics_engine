@@ -16,11 +16,10 @@ pub fn draw_scene(scene: &Scene, camera: &Camera) {
     for object in scene.iter() {
         let t0 = std::time::Instant::now();
 
-        let projected_object = object.prepare_render(camera);
-
+        let mut projected_object = object.clone();
+        projected_object.prepare_render(&camera);
         prepare_render_time += t0.elapsed();
-
-        for triangle in projected_object.mesh_iter() {
+        for triangle in projected_object.triangle_set() {
             let t4 = std::time::Instant::now();
 
             let p1 = triangle.p1();

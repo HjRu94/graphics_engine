@@ -3,6 +3,8 @@ use macroquad::prelude::*;
 use ndarray::prelude::*;
 use ndarray::Zip;
 use std::ops::Add;
+
+use crate::view::Camera;
 #[derive(Clone, PartialEq)]
 pub struct Vector3<T>(Array1<T>);
 
@@ -26,11 +28,20 @@ impl<T: Copy> Vector3<T> {
     pub fn x(&self) -> T {
         self.0[0]
     }
+    pub fn set_x(&mut self, value: T) {
+        self.0[0] = value;
+    }
     pub fn y(&self) -> T {
         self.0[1]
     }
+    pub fn set_y(&mut self, value: T) {
+        self.0[1] = value;
+    }
     pub fn z(&self) -> T {
         self.0[2]
+    }
+    pub fn set_z(&mut self, value: T) {
+        self.0[2] = value;
     }
     pub fn get_array(&self) -> &Array1<T> {
         &self.0
@@ -49,6 +60,25 @@ where
 impl<T: std::fmt::Display + Copy> std::fmt::Display for Vector3<T> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
         write!(f, "({}, {}, {})", self.x(), self.y(), self.z())
+    }
+}
+
+impl Vector3<f32> {
+    pub fn apply_pose(&mut self, pose: &Pose) {
+        *self = pose.orientation().apply(self) + pose.pos().clone();
+    }
+    pub fn camera_project(&mut self, camera: &Camera) {
+        let p = &self.0;
+        let pos = camera.pos().get_array();
+        let orient = camera.orientation();
+        let v = p - pos;
+        let rot = orient.unapply(&v.try_into().expect("Matrix is of wrong dimention"));
+
+        let scalar = 1.0 / rot.x();
+
+        self.0[0] = rot.x();
+        self.0[1] = rot.y() * scalar;
+        self.0[2] = rot.z() * scalar;
     }
 }
 
@@ -131,6 +161,15 @@ impl Orientation {
             [0.0, 0.0, 1.0],
         ]
     }
+    pub fn roll(&self) -> f32 {
+        self.roll
+    }
+    pub fn pitch(&self) -> f32 {
+        self.pitch
+    }
+    pub fn yaw(&self) -> f32 {
+        self.yaw
+    }
 }
 
 #[derive(Debug)]
@@ -179,13 +218,16 @@ impl Triangle {
             normal: normal,
         }
     }
-    pub fn apply_pose(&self, pose: &Pose) -> Self {
-        Triangle {
-            p1: pose.orientation().apply(self.p1()) + pose.pos().clone(),
-            p2: pose.orientation().apply(self.p2()) + pose.pos().clone(),
-            p3: pose.orientation().apply(self.p3()) + pose.pos().clone(),
-            normal: pose.orientation().apply(self.normal()),
-        }
+    pub fn camera_project(&mut self, camera: &Camera) {
+        self.p1.camera_project(camera);
+        self.p2.camera_project(camera);
+        self.p3.camera_project(camera);
+    }
+    pub fn apply_pose(&mut self, pose: &Pose) {
+        self.p1.apply_pose(pose);
+        self.p2.apply_pose(pose);
+        self.p3.apply_pose(pose);
+        self.normal = pose.orientation().apply(self.normal());
     }
     pub fn normal(&self) -> &Vector3<f32> {
         &self.normal
@@ -193,11 +235,20 @@ impl Triangle {
     pub fn p1(&self) -> &Vector3<f32> {
         &self.p1
     }
+    pub fn set_p1(&mut self, value: Vector3<f32>) {
+        self.p1 = value;
+    }
     pub fn p2(&self) -> &Vector3<f32> {
         &self.p2
     }
+    pub fn set_p2(&mut self, value: Vector3<f32>) {
+        self.p2 = value;
+    }
     pub fn p3(&self) -> &Vector3<f32> {
         &self.p3
+    }
+    pub fn set_p3(&mut self, value: Vector3<f32>) {
+        self.p3 = value;
     }
 }
 
@@ -205,6 +256,21 @@ impl Triangle {
 pub struct Pose {
     pos: Vector3<f32>,
     orientation: Orientation,
+}
+
+impl std::fmt::Display for Pose {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
+        write!(
+            f,
+            "Pose:\n  pos: (x: {}, y: {}, z: {})\n  rotation: (roll: {}, pitch: {}, yaw: {})",
+            self.pos.x(),
+            self.pos.y(),
+            self.pos.z(),
+            self.orientation.roll(),
+            self.orientation.pitch(),
+            self.orientation.yaw(),
+        )
+    }
 }
 
 impl Pose {

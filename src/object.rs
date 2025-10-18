@@ -8,7 +8,11 @@ use std::io::Read;
 use byteorder::{LittleEndian, ReadBytesExt};
 
 #[derive(Clone)]
-pub struct Mesh(Vec<Triangle>);
+pub struct Mesh {
+    vertex_set: Vec<Vector3<f32>>,
+    face_set: Vec<(usize, usize, usize)>,
+    normal_set: Vec<Vector3<f32>>,
+}
 
 fn read_vector3<R: Read>(reader: &mut R) -> std::io::Result<Vector3<f32>> {
     let x = reader.read_f32::<LittleEndian>()?;
@@ -18,9 +22,6 @@ fn read_vector3<R: Read>(reader: &mut R) -> std::io::Result<Vector3<f32>> {
 }
 
 impl Mesh {
-    pub fn new(triangles: Vec<Triangle>) -> Self {
-        Mesh(triangles)
-    }
     pub fn try_from_stl_file(filename: &str) -> std::io::Result<Self> {
         let file = File::open(filename)?;
         let mut reader = BufReader::new(file);
@@ -30,94 +31,142 @@ impl Mesh {
 
         let n_triangles = reader.read_u32::<LittleEndian>()?;
 
-        let mut triangles: Vec<Triangle> = vec![];
-
+        let mut vertexes: Vec<Vector3<f32>> = vec![];
+        let mut faces: Vec<(usize, usize, usize)> = vec![];
+        let mut normals: Vec<Vector3<f32>> = vec![];
+        let mut index_counter: usize = 0;
         for _ in 0..n_triangles {
-            let normal = read_vector3(&mut reader)?;
-            let p1 = read_vector3(&mut reader)?;
-            let p2 = read_vector3(&mut reader)?;
-            let p3 = read_vector3(&mut reader)?;
+            normals.push(read_vector3(&mut reader)?);
+            for _ in 0..3 {
+                vertexes.push(read_vector3(&mut reader)?);
+            }
 
             let _end = reader.read_u16::<LittleEndian>()?;
-
-            triangles.push(Triangle::new(p1, p2, p3, normal));
+            faces.push((index_counter, index_counter + 1, index_counter + 2));
+            index_counter += 3
         }
 
-        Ok(Mesh(triangles))
+        Ok(Mesh {
+            vertex_set: vertexes,
+            face_set: faces,
+            normal_set: normals,
+        })
     }
     pub fn alternating_plane(n: i32, square_size: f32, even: bool) -> Self {
-        let mut triangles: Vec<Triangle> = vec![];
+        let mut vertexes: Vec<Vector3<f32>> = vec![];
+        let mut faces: Vec<(usize, usize, usize)> = vec![];
+        let mut normals: Vec<Vector3<f32>> = vec![];
+        let mut index_counter: usize = 0;
+
         for i in (-n)..n {
             for j in (-n)..n {
                 if (i + j).rem_euclid(2) == even as i32 {
-                    triangles.push(Triangle::new(
-                        Vector3::new(i as f32 * square_size, j as f32 * square_size, 0.0),
-                        Vector3::new((i + 1) as f32 * square_size, j as f32 * square_size, 0.0),
-                        Vector3::new(
-                            (i + 1) as f32 * square_size,
-                            (j + 1) as f32 * square_size,
-                            0.0,
-                        ),
-                        Vector3::new(0.0, 0.0, 1.0),
+                    vertexes.push(Vector3::new(
+                        i as f32 * square_size,
+                        j as f32 * square_size,
+                        0.0,
                     ));
-                    triangles.push(Triangle::new(
-                        Vector3::new(i as f32 * square_size, j as f32 * square_size, 0.0),
-                        Vector3::new(i as f32 * square_size, (j + 1) as f32 * square_size, 0.0),
-                        Vector3::new(
-                            (i + 1) as f32 * square_size,
-                            (j + 1) as f32 * square_size,
-                            0.0,
-                        ),
-                        Vector3::new(0.0, 0.0, 1.0),
+                    vertexes.push(Vector3::new(
+                        (i + 1) as f32 * square_size,
+                        j as f32 * square_size,
+                        0.0,
                     ));
+                    vertexes.push(Vector3::new(
+                        i as f32 * square_size,
+                        (j + 1) as f32 * square_size,
+                        0.0,
+                    ));
+                    vertexes.push(Vector3::new(
+                        (i + 1) as f32 * square_size,
+                        (j + 1) as f32 * square_size,
+                        0.0,
+                    ));
+                    normals.push(Vector3::new(0.0, 0.0, 1.0));
+                    normals.push(Vector3::new(0.0, 0.0, 1.0));
+
+                    faces.push((index_counter, index_counter + 1, index_counter + 3));
+                    faces.push((index_counter, index_counter + 2, index_counter + 3));
+                    index_counter += 4;
                 }
             }
         }
-        Mesh(triangles)
+
+        Mesh {
+            vertex_set: vertexes,
+            face_set: faces,
+            normal_set: normals,
+        }
     }
     pub fn sort_by_x(&mut self) {
-        self.0.sort_by(|a, b| {
-            let depth_a = (a.p1().x() + a.p2().x() + a.p3().x()) / 3.0;
-            let depth_b = (b.p1().x() + b.p2().x() + b.p3().x()) / 3.0;
+        // Zip faces and normals together
+        let mut combined: Vec<_> = self.face_set.iter().zip(self.normal_set.iter()).collect();
 
-            depth_b.partial_cmp(&depth_a).unwrap()
+        // Sort them together based on the average x-coordinate of each face
+        combined.sort_by(|(a_face, _), (b_face, _)| {
+            let depth_a = (self.vertex_set[a_face.0].x()
+                + self.vertex_set[a_face.1].x()
+                + self.vertex_set[a_face.2].x())
+                / 3.0;
+            let depth_b = (self.vertex_set[b_face.0].x()
+                + self.vertex_set[b_face.1].x()
+                + self.vertex_set[b_face.2].x())
+                / 3.0;
+
+            // Sort from farthest to nearest
+            depth_b
+                .partial_cmp(&depth_a)
+                .unwrap_or(std::cmp::Ordering::Equal)
         });
+
+        // Unzip them back into separate vectors
+        let (faces, normals): (Vec<_>, Vec<_>) =
+            combined.into_iter().map(|(f, n)| (*f, n.clone())).unzip();
+
+        self.face_set = faces;
+        self.normal_set = normals;
     }
     pub fn remove_away_faceing_triangles(&mut self, camera: &Camera) {
-        self.0 = self
-            .0
+        (self.face_set, self.normal_set) = self
+            .face_set
             .iter()
-            .filter(|triangle| camera.orientation().unapply(triangle.normal()).x() < 0.0)
-            .cloned() // clone because iter() yields &Triangle
-            .collect();
+            .zip(self.normal_set.iter())
+            .filter(|(_a, b)| camera.orientation().unapply(b).x() < 0.0)
+            .map(|(a, b)| (*a, b.clone()))
+            .unzip()
     }
     pub fn reverse(&mut self) {
-        self.0.reverse();
+        self.face_set.reverse();
+        self.normal_set.reverse();
     }
-    pub fn apply_pose(&self, pose: &Pose) -> Mesh {
+    pub fn apply_pose(&mut self, pose: &Pose) {
+        for vertex in self.vertex_set.iter_mut() {
+            vertex.apply_pose(pose);
+        }
+        for normal in self.normal_set.iter_mut() {
+            *normal = pose.orientation().apply(normal);
+        }
+    }
+
+    pub fn triangle_set(&self) -> Vec<Triangle> {
         let mut triangles: Vec<Triangle> = vec![];
-
-        for triangle in &self.0 {
-            triangles.push(triangle.apply_pose(pose));
+        for ((v1, v2, v3), normal) in self.face_set.iter().zip(self.normal_set.iter()) {
+            triangles.push(Triangle::new(
+                self.vertex_set[*v1].clone(),
+                self.vertex_set[*v2].clone(),
+                self.vertex_set[*v3].clone(),
+                normal.clone(),
+            ))
         }
-        Mesh::new(triangles)
+        triangles
     }
-    pub fn iter(&self) -> impl Iterator<Item = &Triangle> {
-        self.0.iter()
+    pub fn camera_project(&mut self, camera: &Camera) {
+        for vertex in self.vertex_set.iter_mut() {
+            vertex.camera_project(camera);
+        }
     }
 }
 
-impl std::fmt::Display for Mesh {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
-        let mut ret = String::from("");
-        for triangle in &self.0 {
-            ret += &format!("{}", triangle);
-            ret += "\n"
-        }
-        write!(f, "Object: \n{}", ret)
-    }
-}
-
+#[derive(Clone)]
 pub struct Object {
     pub mesh: Mesh,
     pose: Pose,
@@ -132,18 +181,13 @@ impl Object {
             color: color,
         }
     }
-    pub fn apply_pose(&self) -> Self {
-        Object {
-            mesh: self.mesh.apply_pose(&self.pose),
-            pose: Pose::zero(),
-            color: self.color(),
-        }
+    pub fn apply_pose(&mut self) {
+        self.mesh.apply_pose(&self.pose);
     }
-    pub fn prepare_render(&self, camera: &Camera) -> Self {
-        let mut projected_object = camera.project_object(self);
-        projected_object.mesh.sort_by_x();
-        projected_object.mesh.remove_away_faceing_triangles(camera);
-        projected_object
+    pub fn prepare_render(&mut self, camera: &Camera) {
+        self.camera_project(camera);
+        self.mesh.remove_away_faceing_triangles(camera);
+        self.mesh.sort_by_x();
     }
     pub fn reverse(&mut self) {
         self.mesh.reverse();
@@ -157,8 +201,12 @@ impl Object {
     pub fn color(&self) -> Color {
         self.color
     }
-    pub fn mesh_iter(&self) -> impl Iterator<Item = &Triangle> {
-        self.mesh.iter()
+    pub fn triangle_set(&self) -> Vec<Triangle> {
+        self.mesh.triangle_set()
+    }
+    pub fn camera_project(&mut self, camera: &Camera) {
+        self.apply_pose();
+        self.mesh.camera_project(camera);
     }
 }
 
