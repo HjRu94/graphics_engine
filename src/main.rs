@@ -46,6 +46,7 @@ async fn main() {
         facing.update_camera_distance();
         facing.drag_camera_pos();
         draw_scene(&scene, &camera);
+        draw_fps();
         next_frame().await;
     }
 }
