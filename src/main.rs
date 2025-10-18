@@ -22,7 +22,7 @@ fn window_conf() -> Conf {
 
 #[macroquad::main(window_conf)]
 async fn main() {
-    let mesh = Mesh::try_from_stl_file("./3d_models/flygplan.stl").expect("File doesn't exist");
+    let mesh = Mesh::try_from_stl_file("./sphere.stl").expect("File doesn't exist");
 
     let mut scene = Scene::plane_world(
         PLANE_SIZE,
