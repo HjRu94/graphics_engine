@@ -1,4 +1,5 @@
 use crate::geometry::{Pose, Triangle, Vector3};
+use crate::object;
 use crate::view::Camera;
 use macroquad::prelude::Color;
 use std::fs::File;
@@ -252,6 +253,26 @@ impl Scene {
     pub const EMPTY: Scene = Scene { objects: vec![] };
     pub fn new(objects: Vec<Object>) -> Self {
         Scene { objects: objects }
+    }
+    pub fn plane_world(
+        plane_size: i32,
+        plane_square_size: f32,
+        color1: Color,
+        color2: Color,
+    ) -> Self {
+        //even plane
+        let plane_mesh_even = Mesh::alternating_plane(plane_size, plane_square_size, true);
+        let plane_object_even = Object::new(plane_mesh_even, Pose::zero(), color1);
+
+        //odd plane
+        let plane_mesh_odd = Mesh::alternating_plane(plane_size, plane_square_size, false);
+        let plane_object_odd = Object::new(plane_mesh_odd, Pose::zero(), color2);
+
+        let objects = vec![plane_object_even, plane_object_odd];
+        Scene { objects }
+    }
+    pub fn push_object(&mut self, object: Object) {
+        self.objects.push(object);
     }
     pub fn iter(&self) -> impl Iterator<Item = &Object> {
         self.objects.iter()

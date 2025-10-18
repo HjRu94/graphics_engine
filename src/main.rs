@@ -1,3 +1,7 @@
+use learning_graphics::constants::{
+    MONITOR_SCALING, PLANE_DARK_COLOR, PLANE_LIGHT_COLOR, PLANE_SIZE, PLANE_SQUARE_SIZE,
+    WINDOW_HEIGHT, WINDOW_WIDTH,
+};
 use learning_graphics::draw::draw_scene;
 use learning_graphics::geometry::{Orientation, Pose, Vector3};
 use learning_graphics::object::{Mesh, Object, Scene};
@@ -7,8 +11,8 @@ use macroquad::prelude::*;
 fn window_conf() -> Conf {
     Conf {
         window_title: "Graphics".to_owned(),
-        window_width: 2000,
-        window_height: 2000,
+        window_width: (WINDOW_WIDTH as f32 * MONITOR_SCALING).round() as i32,
+        window_height: (WINDOW_HEIGHT as f32 * MONITOR_SCALING).round() as i32,
         high_dpi: true,
         ..Default::default()
     }
@@ -20,27 +24,20 @@ fn window_conf() -> Conf {
 async fn main() {
     let mut z: f32 = -0.78;
     let mut x: f32 = 0.00;
-    let mesh = Mesh::try_from_stl_file("./3d_models/apa.stl").expect("File doesn't exist");
+    let mesh = Mesh::try_from_stl_file("./3d_models/flygplan.stl").expect("File doesn't exist");
 
-    //even plane
-    let plane_mesh_even = Mesh::alternating_plane(10, 2.0, true);
-    let plane_object_even = Object::new(
-        plane_mesh_even,
-        Pose::zero(),
-        Color::new(1.0, 1.0, 1.0, 1.0),
+    let mut scene = Scene::plane_world(
+        PLANE_SIZE,
+        PLANE_SQUARE_SIZE,
+        PLANE_DARK_COLOR,
+        PLANE_LIGHT_COLOR,
     );
-
-    //odd plane
-    let plane_mesh_odd = Mesh::alternating_plane(10, 2.0, false);
-    let plane_object_odd =
-        Object::new(plane_mesh_odd, Pose::zero(), Color::new(0.2, 0.2, 0.2, 1.0));
 
     let object_orientation = Orientation::new(x, 0.0, 0.0);
 
     let pose = Pose::new(Vector3::zero(), object_orientation);
     let object = Object::new(mesh.clone(), pose, Color::new(0.5, 0.0, 1.0, 1.0));
-    let objects = vec![plane_object_even, plane_object_odd, object];
-    let scene = Scene::new(objects);
+    scene.push_object(object);
     loop {
         z += 0.03;
         x += 0.03;
