@@ -33,7 +33,7 @@ async fn main() {
     let plane_mesh_odd = Mesh::alternating_plane(PLANE_SIZE, PLANE_SQUARE_SIZE, false);
     let plane_object_odd = Object::new(plane_mesh_odd, Pose::zero(), PLANE_DARK_COLOR);
 
-    let object_orientation = Orientation::new(0.0, 0.0, 0.0);
+    let object_orientation = Orientation::new(1.0, 0.0, 0.0);
 
     let pose = Pose::new(Vector3::zero(), object_orientation);
     let object = Object::new(mesh.clone(), pose, Color::new(0.5, 0.0, 1.0, 1.0));

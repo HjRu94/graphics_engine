@@ -57,44 +57,57 @@ pub struct Orientation {
     roll: f32,
     pitch: f32,
     yaw: f32,
+    rotation_matrix: Array2<f32>, // precomputed R = Yaw * Pitch * Roll
+    inverse_matrix: Array2<f32>,  // precomputed R⁻¹ = Roll(-r) * Pitch(-p) * Yaw(-y)
 }
 
 impl Orientation {
-    pub const ZERO: Orientation = Orientation {
-        roll: 0.0,
-        pitch: 0.0,
-        yaw: 0.0,
-    };
-
-    pub fn new(roll: f32, pitch: f32, yaw: f32) -> Self {
+    pub fn zero() -> Orientation {
         Orientation {
-            roll: roll,
-            pitch: pitch,
-            yaw: yaw,
+            roll: 0.0,
+            pitch: 0.0,
+            yaw: 0.0,
+            rotation_matrix: array![[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]],
+            inverse_matrix: array![[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]],
         }
     }
+
+    pub fn new(roll: f32, pitch: f32, yaw: f32) -> Self {
+        let r_matrix = Self::yaw_matrix(yaw)
+            .dot(&Self::pitch_matrix(pitch))
+            .dot(&Self::roll_matrix(roll));
+
+        let inv_matrix = Self::roll_matrix(-roll)
+            .dot(&Self::pitch_matrix(-pitch))
+            .dot(&Self::yaw_matrix(-yaw));
+
+        Orientation {
+            roll,
+            pitch,
+            yaw,
+            rotation_matrix: r_matrix,
+            inverse_matrix: inv_matrix,
+        }
+    }
+
     pub fn direction(&self) -> Vector3<f32> {
         self.apply(&Vector3::new(-1.0, 0.0, 0.0))
     }
+
     pub fn apply(&self, v: &Vector3<f32>) -> Vector3<f32> {
-        Self::yaw_matrix(self.yaw)
-            .dot(&Self::pitch_matrix(self.pitch))
-            .dot(&Self::roll_matrix(self.roll))
+        self.rotation_matrix
             .dot(&v.0)
             .try_into()
-            .expect("Dimention is incorrect")
+            .expect("Dimension is incorrect")
     }
+
     pub fn unapply(&self, v: &Vector3<f32>) -> Vector3<f32> {
-        Self::roll_matrix(-self.roll)
-            .dot(&Self::pitch_matrix(-self.pitch))
-            .dot(&Self::yaw_matrix(-self.yaw))
+        self.inverse_matrix
             .dot(&v.0)
             .try_into()
-            .expect("Dimention is incorrect")
+            .expect("Dimension is incorrect")
     }
-    pub fn roll(&self) -> f32 {
-        self.roll
-    }
+
     fn roll_matrix(roll: f32) -> Array2<f32> {
         array![
             [1.0, 0.0, 0.0],
@@ -102,9 +115,7 @@ impl Orientation {
             [0.0, -roll.sin(), roll.cos()],
         ]
     }
-    pub fn pitch(&self) -> f32 {
-        self.pitch
-    }
+
     fn pitch_matrix(pitch: f32) -> Array2<f32> {
         array![
             [pitch.cos(), 0.0, -pitch.sin()],
@@ -112,9 +123,7 @@ impl Orientation {
             [pitch.sin(), 0.0, pitch.cos()],
         ]
     }
-    pub fn yaw(&self) -> f32 {
-        self.yaw
-    }
+
     fn yaw_matrix(yaw: f32) -> Array2<f32> {
         array![
             [yaw.cos(), yaw.sin(), 0.0],
@@ -202,7 +211,7 @@ impl Pose {
     pub fn zero() -> Self {
         Pose {
             pos: Vector3::zero(),
-            orientation: Orientation::ZERO,
+            orientation: Orientation::zero(),
         }
     }
     pub fn new(pos: Vector3<f32>, orientation: Orientation) -> Self {

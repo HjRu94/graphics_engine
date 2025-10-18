@@ -119,7 +119,7 @@ impl std::fmt::Display for Mesh {
 }
 
 pub struct Object {
-    mesh: Mesh,
+    pub mesh: Mesh,
     pose: Pose,
     color: Color,
 }
@@ -141,7 +141,6 @@ impl Object {
     }
     pub fn prepare_render(&self, camera: &Camera) -> Self {
         let mut projected_object = camera.project_object(self);
-        projected_object = projected_object.apply_pose();
         projected_object.mesh.sort_by_x();
         projected_object.mesh.remove_away_faceing_triangles(camera);
         projected_object
