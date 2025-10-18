@@ -1,5 +1,4 @@
 use crate::geometry::{Pose, Triangle, Vector3};
-use crate::object;
 use crate::view::Camera;
 use macroquad::prelude::Color;
 use std::fs::File;

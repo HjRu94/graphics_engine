@@ -1,10 +1,10 @@
+use crate::constants::{AMBIENT_LIGHT, FIELD_OF_VIEW, WINDOW_HEIGHT, WINDOW_WIDTH};
 use crate::object::Scene;
 use crate::view::Camera;
 use macroquad::prelude::*;
 use ndarray::Array1;
 
 pub fn draw_scene(scene: &Scene, camera: &Camera) {
-    let scalar = 1000.0;
     for object in scene.iter() {
         let projected_object = object.prepare_render(camera);
 
@@ -21,8 +21,7 @@ pub fn draw_scene(scene: &Scene, camera: &Camera) {
             let light_dir: Array1<f32> = camera.orientation().direction().into();
             let intensity = normal.dot(&light_dir).max(0.0);
 
-            let ambient = 0.5;
-            let intensity = ambient + intensity * (1.0 - ambient);
+            let intensity = AMBIENT_LIGHT + intensity * (1.0 - AMBIENT_LIGHT);
 
             let color = Color::new(
                 object.color().r * intensity,
@@ -32,9 +31,18 @@ pub fn draw_scene(scene: &Scene, camera: &Camera) {
             );
 
             draw_triangle(
-                vec2(500.0 - p1.y() * scalar, 500.0 - p1.z() * scalar),
-                vec2(500.0 - p2.y() * scalar, 500.0 - p2.z() * scalar),
-                vec2(500.0 - p3.y() * scalar, 500.0 - p3.z() * scalar),
+                vec2(
+                    WINDOW_WIDTH as f32 / 2.0 - p1.y() * FIELD_OF_VIEW,
+                    WINDOW_HEIGHT as f32 / 2.0 - p1.z() * FIELD_OF_VIEW,
+                ),
+                vec2(
+                    WINDOW_WIDTH as f32 / 2.0 - p2.y() * FIELD_OF_VIEW,
+                    WINDOW_HEIGHT as f32 / 2.0 - p2.z() * FIELD_OF_VIEW,
+                ),
+                vec2(
+                    WINDOW_WIDTH as f32 / 2.0 - p3.y() * FIELD_OF_VIEW,
+                    WINDOW_HEIGHT as f32 / 2.0 - p3.z() * FIELD_OF_VIEW,
+                ),
                 color,
             );
         }

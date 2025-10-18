@@ -1,6 +1,6 @@
 use crate::{
     geometry::{Orientation, Pose, Triangle, Vector3},
-    object::{self, Mesh, Object},
+    object::{Mesh, Object},
 };
 pub struct Camera {
     pose: Pose,
