@@ -4,7 +4,7 @@ use macroquad::prelude::*;
 use ndarray::Array1;
 
 pub fn draw_scene(scene: &Scene, camera: &Camera) {
-    let scalar = 200.0;
+    let scalar = 1000.0;
     for object in scene.iter() {
         let projected_object = object.prepare_render(camera);
 

@@ -46,6 +46,36 @@ impl Mesh {
 
         Ok(Mesh(triangles))
     }
+    pub fn alternating_plane(n: i32, square_size: f32, even: bool) -> Self {
+        let mut triangles: Vec<Triangle> = vec![];
+        for i in (-n)..n {
+            for j in (-n)..n {
+                if (i + j).rem_euclid(2) == even as i32 {
+                    triangles.push(Triangle::new(
+                        Vector3::new(i as f32 * square_size, j as f32 * square_size, 0.0),
+                        Vector3::new((i + 1) as f32 * square_size, j as f32 * square_size, 0.0),
+                        Vector3::new(
+                            (i + 1) as f32 * square_size,
+                            (j + 1) as f32 * square_size,
+                            0.0,
+                        ),
+                        Vector3::new(0.0, 0.0, 1.0),
+                    ));
+                    triangles.push(Triangle::new(
+                        Vector3::new(i as f32 * square_size, j as f32 * square_size, 0.0),
+                        Vector3::new(i as f32 * square_size, (j + 1) as f32 * square_size, 0.0),
+                        Vector3::new(
+                            (i + 1) as f32 * square_size,
+                            (j + 1) as f32 * square_size,
+                            0.0,
+                        ),
+                        Vector3::new(0.0, 0.0, 1.0),
+                    ));
+                }
+            }
+        }
+        Mesh(triangles)
+    }
     pub fn sort_by_x(&mut self) {
         self.0.sort_by(|a, b| {
             let depth_a = (a.p1().x() + a.p2().x() + a.p3().x()) / 3.0;
@@ -147,4 +177,3 @@ impl Scene {
         self.objects.iter()
     }
 }
-
