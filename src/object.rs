@@ -5,6 +5,8 @@ use std::fs::File;
 use std::io::BufReader;
 use std::io::Read;
 
+use std::collections::HashMap;
+
 use byteorder::{LittleEndian, ReadBytesExt};
 
 #[derive(Clone)]
@@ -45,12 +47,42 @@ impl Mesh {
             faces.push((index_counter, index_counter + 1, index_counter + 2));
             index_counter += 3
         }
-
-        Ok(Mesh {
+        let mut ret = Mesh {
             vertex_set: vertexes,
             face_set: faces,
             normal_set: normals,
-        })
+        };
+
+        ret.optimize();
+
+        Ok(ret)
+    }
+    pub fn optimize(&mut self) {
+        let mut unique_vertices: Vec<Vector3<f32>> = Vec::new();
+        let mut vertex_map: HashMap<Vector3<f32>, usize> = HashMap::new();
+
+        // Map old indices → new indices
+        let mut remap: Vec<usize> = vec![0; self.vertex_set.len()];
+
+        for (old_idx, v) in self.vertex_set.iter().enumerate() {
+            if let Some(&new_idx) = vertex_map.get(v) {
+                remap[old_idx] = new_idx;
+            } else {
+                let new_idx = unique_vertices.len();
+                vertex_map.insert(v.clone(), new_idx);
+                unique_vertices.push(v.clone());
+                remap[old_idx] = new_idx;
+            }
+        }
+
+        // Update faces using new indices
+        for face in &mut self.face_set {
+            face.0 = remap[face.0];
+            face.1 = remap[face.1];
+            face.2 = remap[face.2];
+        }
+
+        self.vertex_set = unique_vertices;
     }
     pub fn alternating_plane(n: i32, square_size: f32, even: bool) -> Self {
         let mut vertexes: Vec<Vector3<f32>> = vec![];
@@ -91,11 +123,13 @@ impl Mesh {
             }
         }
 
-        Mesh {
+        let mut ret = Mesh {
             vertex_set: vertexes,
             face_set: faces,
             normal_set: normals,
-        }
+        };
+        ret.optimize();
+        ret
     }
     pub fn sort_by_x(&mut self) {
         // Zip faces and normals together

@@ -4,8 +4,11 @@ use ndarray::prelude::*;
 use ndarray::Zip;
 use std::ops::Add;
 
+use std::hash::{Hash, Hasher};
+
 use crate::view::Camera;
-#[derive(Clone, PartialEq)]
+
+#[derive(Clone)]
 pub struct Vector3<T>(Array1<T>);
 
 impl<T> Add for Vector3<T>
@@ -79,6 +82,27 @@ impl Vector3<f32> {
         self.0[0] = rot.x();
         self.0[1] = rot.y() * scalar;
         self.0[2] = rot.z() * scalar;
+    }
+}
+impl PartialEq for Vector3<f32> {
+    fn eq(&self, other: &Self) -> bool {
+        self.0.len() == other.0.len()
+            && self
+                .0
+                .iter()
+                .zip(other.0.iter())
+                .all(|(a, b)| (a - b).abs() < f32::EPSILON)
+    }
+}
+
+impl Eq for Vector3<f32> {}
+
+impl Hash for Vector3<f32> {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        // Use bit representation for stable hashing of f32
+        for x in self.0.iter() {
+            state.write_u32(x.to_bits());
+        }
     }
 }
 
