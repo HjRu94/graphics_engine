@@ -214,6 +214,10 @@ impl Mesh {
         self.face_set.len()
     }
 
+    pub fn n_vertices(&self) -> usize {
+        self.vertex_set.len()
+    }
+
     pub fn triangle_set(&self) -> Vec<Triangle> {
         let mut triangles: Vec<Triangle> = vec![];
         for ((v1, v2, v3), normal) in self.face_set.iter().zip(self.normal_set.iter()) {
@@ -282,6 +286,20 @@ impl Object {
             pose: pose,
             color: MeshColor::SolidColor(color),
         }
+    }
+
+    pub fn try_new_from_colormap(mesh: Mesh, pose: Pose, color_map: ColorMap) -> Result<Self, ()> {
+        if color_map.colors.len() != mesh.n_vertices() {
+            return Err(());
+        }
+        Ok(
+            Object {
+            mesh: mesh,
+            pose: pose,
+            color: MeshColor::VertexColorMap(color_map),
+            }
+        )
+
     }
 
     pub fn new_gradient_object(mesh: Mesh, pose: Pose, color1: Color, color2: Color) -> Self {
