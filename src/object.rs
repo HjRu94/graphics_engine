@@ -2,9 +2,11 @@ use crate::geometry::{Pose, Triangle, Vector3};
 use crate::view::Camera;
 use core::f32;
 use macroquad::prelude::Color;
+use ndarray_linalg::norm;
 use std::fs::File;
 use std::io::BufReader;
 use std::io::Read;
+use std::io::{Error, ErrorKind};
 
 use std::collections::HashMap;
 
@@ -25,6 +27,32 @@ fn read_vector3<R: Read>(reader: &mut R) -> std::io::Result<Vector3<f32>> {
 }
 
 impl Mesh {
+    pub fn try_new(
+        vertex_set: Vec<Vector3<f32>>,
+        face_set: Vec<(usize, usize, usize)>,
+        normal_set: Vec<Vector3<f32>>,
+    ) -> std::io::Result<Self> {
+        if face_set.len() != normal_set.len() {
+            return Err(Error::other(
+                "face set and normal set have different length",
+            ));
+        }
+        let n_vertexes = vertex_set.len();
+        for (v1, v2, v3) in &face_set {
+            for i in [v1, v2, v3] {
+                if *i >= n_vertexes {
+                    return Err(Error::other(
+                        "face set references vertesies that don't exist",
+                    ));
+                }
+            }
+        }
+        Ok(Mesh {
+            vertex_set: vertex_set,
+            face_set: face_set,
+            normal_set: normal_set,
+        })
+    }
     pub fn try_from_stl_file(filename: &str) -> std::io::Result<Self> {
         let file = File::open(filename)?;
         let mut reader = BufReader::new(file);
