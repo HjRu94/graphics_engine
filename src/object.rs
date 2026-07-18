@@ -235,7 +235,7 @@ impl Mesh {
 
 #[derive(Clone)]
 pub struct ColorMap {
-    colors: Vec<Color>,
+    pub colors: Vec<Color>,
 }
 
 #[derive(Clone)]
