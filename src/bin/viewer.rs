@@ -1,11 +1,11 @@
-use learning_graphics::constants::{
+use graphics_engine::constants::{
     MONITOR_SCALING, PLANE_DARK_COLOR, PLANE_LIGHT_COLOR, PLANE_SIZE, PLANE_SQUARE_SIZE,
     WINDOW_HEIGHT, WINDOW_WIDTH,
 };
-use learning_graphics::draw::draw_scene;
-use learning_graphics::geometry::{Orientation, Pose, Vector3};
-use learning_graphics::object::{Mesh, Object, Scene};
-use learning_graphics::view::Facing;
+use graphics_engine::draw::draw_scene;
+use graphics_engine::geometry::{Orientation, Pose, Vector3};
+use graphics_engine::object::{Mesh, Object, Scene};
+use graphics_engine::view::Facing;
 use macroquad::prelude::*;
 
 fn window_conf() -> Conf {

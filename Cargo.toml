@@ -1,5 +1,5 @@
 [package]
-name = "3d-graphics"
+name = "graphics_engine"
 version = "0.1.0"
 edition = "2024"
 
