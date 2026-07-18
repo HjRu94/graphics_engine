@@ -1,4 +1,4 @@
-# 🖤 Learning Graphics 🚀
+# 🖤 3d-graphis 🚀
 This is a small 3D graphics engine built in **Rust**. This is a project for me to learn about 3D Graphics. Start the program up by running:
 
 ```bash
