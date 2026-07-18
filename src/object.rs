@@ -1,5 +1,6 @@
 use crate::geometry::{Pose, Triangle, Vector3};
 use crate::view::Camera;
+use core::f32;
 use macroquad::prelude::Color;
 use std::fs::File;
 use std::io::BufReader;
@@ -181,6 +182,10 @@ impl Mesh {
         }
     }
 
+    pub fn n_faces(&self) -> usize {
+        self.face_set.len()
+    }
+
     pub fn triangle_set(&self) -> Vec<Triangle> {
         let mut triangles: Vec<Triangle> = vec![];
         for ((v1, v2, v3), normal) in self.face_set.iter().zip(self.normal_set.iter()) {
@@ -201,10 +206,45 @@ impl Mesh {
 }
 
 #[derive(Clone)]
+pub struct ColorMap {
+    colors: Vec<Color>,
+}
+
+#[derive(Clone)]
+pub enum MeshColor {
+    SolidColor(Color),
+    VertexColorMap(ColorMap),
+}
+
+impl MeshColor {
+    fn gradient(color1: Color, color2: Color, mesh: &Mesh) -> Self {
+        let mut max_x: f32 = f32::NEG_INFINITY;
+        let mut min_x: f32 = f32::INFINITY;
+
+        for vertex in &mesh.vertex_set {
+            max_x = max_x.max(vertex.x());
+            min_x = min_x.min(vertex.x());
+        }
+        let mut colors: Vec<Color> = vec![];
+
+        for vertex in &mesh.vertex_set {
+            let ratio = (vertex.x() - min_x) / (max_x - min_x);
+
+            let r = color1.r * ratio + color2.r * (1.0 - ratio);
+            let g = color1.g * ratio + color2.g * (1.0 - ratio);
+            let b = color1.b * ratio + color2.b * (1.0 - ratio);
+
+            colors.push(Color::new(r, g, b, 1.0))
+        }
+        MeshColor::VertexColorMap(ColorMap { colors: colors })
+    }
+}
+
+#[derive(Clone)]
 pub struct Object {
     pub mesh: Mesh,
     pose: Pose,
-    color: Color,
+    color: MeshColor,
 }
 
 impl Object {
@@ -212,7 +252,16 @@ impl Object {
         Object {
             mesh: mesh,
             pose: pose,
-            color: color,
+            color: MeshColor::SolidColor(color),
+        }
+    }
+
+    pub fn new_gradient_object(mesh: Mesh, pose: Pose, color1: Color, color2: Color) -> Self {
+        let gradient = MeshColor::gradient(color1, color2, &mesh);
+        Object {
+            mesh: mesh,
+            pose: pose,
+            color: gradient,
         }
     }
     pub fn apply_pose(&mut self) {
@@ -232,11 +281,36 @@ impl Object {
     pub fn pose(&self) -> &Pose {
         &self.pose
     }
-    pub fn color(&self) -> Color {
-        self.color
+    pub fn color(&self) -> &MeshColor {
+        &self.color
     }
     pub fn triangle_set(&self) -> Vec<Triangle> {
         self.mesh.triangle_set()
+    }
+    pub fn triangle_color_set(&self) -> Vec<(Triangle, Color, Color, Color)> {
+        let mut color_triangles: Vec<(Triangle, Color, Color, Color)> = vec![];
+        for i in 0..self.mesh.n_faces() {
+            let v1 = self.mesh.face_set[i].0;
+            let v2 = self.mesh.face_set[i].1;
+            let v3 = self.mesh.face_set[i].2;
+            let normal = self.mesh.normal_set[i].clone();
+            let triangle = Triangle::new(
+                self.mesh.vertex_set[v1].clone(),
+                self.mesh.vertex_set[v2].clone(),
+                self.mesh.vertex_set[v3].clone(),
+                normal.clone(),
+            );
+            let (color1, color2, color3) = match self.color.clone() {
+                MeshColor::SolidColor(color) => (color, color, color),
+                MeshColor::VertexColorMap(color_map) => (
+                    color_map.colors[v1],
+                    color_map.colors[v2],
+                    color_map.colors[v3],
+                ),
+            };
+            color_triangles.push((triangle, color1, color2, color3));
+        }
+        color_triangles
     }
     pub fn camera_project(&mut self, camera: &Camera) {
         self.apply_pose();

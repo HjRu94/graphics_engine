@@ -20,7 +20,7 @@ pub fn draw_scene(scene: &Scene, camera: &Camera) {
         let mut projected_object = object.clone();
         projected_object.prepare_render(&camera);
         prepare_render_time += t0.elapsed();
-        for triangle in projected_object.triangle_set() {
+        for (triangle, color1, color2, color3) in projected_object.triangle_color_set() {
             let t4 = std::time::Instant::now();
 
             let p1 = triangle.p1();
@@ -46,28 +46,61 @@ pub fn draw_scene(scene: &Scene, camera: &Camera) {
             // Drawing
             let t6 = std::time::Instant::now();
 
-            let color = Color::new(
-                object.color().r * intensity,
-                object.color().g * intensity,
-                object.color().b * intensity,
-                object.color().a,
-            );
-
-            draw_triangle(
-                vec2(
-                    WINDOW_WIDTH as f32 / 2.0 - p1.y() * FIELD_OF_VIEW,
-                    WINDOW_HEIGHT as f32 / 2.0 - p1.z() * FIELD_OF_VIEW,
-                ),
-                vec2(
-                    WINDOW_WIDTH as f32 / 2.0 - p2.y() * FIELD_OF_VIEW,
-                    WINDOW_HEIGHT as f32 / 2.0 - p2.z() * FIELD_OF_VIEW,
-                ),
-                vec2(
-                    WINDOW_WIDTH as f32 / 2.0 - p3.y() * FIELD_OF_VIEW,
-                    WINDOW_HEIGHT as f32 / 2.0 - p3.z() * FIELD_OF_VIEW,
-                ),
-                color,
-            );
+            let mesh = Mesh {
+                vertices: vec![
+                    Vertex {
+                        position: vec3(
+                            WINDOW_WIDTH as f32 / 2.0 - p1.y() * FIELD_OF_VIEW,
+                            WINDOW_HEIGHT as f32 / 2.0 - p1.z() * FIELD_OF_VIEW,
+                            0.0,
+                        ),
+                        uv: vec2(0.0, 0.0),
+                        color: Color::new(
+                            color1.r * intensity,
+                            color1.g * intensity,
+                            color1.b * intensity,
+                            color1.a,
+                        )
+                        .into(),
+                        normal: vec4(0.0, 0.0, 1.0, 0.0),
+                    },
+                    Vertex {
+                        position: vec3(
+                            WINDOW_WIDTH as f32 / 2.0 - p2.y() * FIELD_OF_VIEW,
+                            WINDOW_HEIGHT as f32 / 2.0 - p2.z() * FIELD_OF_VIEW,
+                            0.0,
+                        ),
+                        uv: vec2(0.0, 0.0),
+                        color: Color::new(
+                            color2.r * intensity,
+                            color2.g * intensity,
+                            color2.b * intensity,
+                            color2.a,
+                        )
+                        .into(),
+                        normal: vec4(0.0, 0.0, 1.0, 0.0),
+                    },
+                    Vertex {
+                        position: vec3(
+                            WINDOW_WIDTH as f32 / 2.0 - p3.y() * FIELD_OF_VIEW,
+                            WINDOW_HEIGHT as f32 / 2.0 - p3.z() * FIELD_OF_VIEW,
+                            0.0,
+                        ),
+                        uv: vec2(0.0, 0.0),
+                        color: Color::new(
+                            color3.r * intensity,
+                            color3.g * intensity,
+                            color3.b * intensity,
+                            color3.a,
+                        )
+                        .into(),
+                        normal: vec4(0.0, 0.0, 1.0, 0.0),
+                    },
+                ],
+                indices: vec![0, 1, 2],
+                texture: None,
+            };
+            draw_mesh(&mesh);
 
             draw_time += t6.elapsed();
         }

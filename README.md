@@ -3,6 +3,7 @@ This is a small 3D graphics engine built in **Rust**. This is a project for me t
 
 ```bash
 cargo run --bin viewer
+cargo run --bin gradient
 ```
 
 ---
